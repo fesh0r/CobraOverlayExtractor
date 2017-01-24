@@ -1,0 +1,13 @@
+﻿<Properties StartupItem="Ovl_Extractor\ OVL_Extractor.csproj">
+  <MonoDevelop.Ide.Workspace ActiveConfiguration="Debug|x86" />
+  <MonoDevelop.Ide.Workbench ActiveDocument="Ovl_Extractor\Program.cs">
+    <Files>
+      <File FileName="Ovl_Extractor\Program.cs" Line="14" Column="21" />
+    </Files>
+  </MonoDevelop.Ide.Workbench>
+  <MonoDevelop.Ide.DebuggingService.Breakpoints>
+    <BreakpointStore />
+  </MonoDevelop.Ide.DebuggingService.Breakpoints>
+  <MonoDevelop.Ide.DebuggingService.PinnedWatches />
+  <AuthorInfo Name="Eishiro Sugata" Email="" Copyright="" Company="" Trademark="" />
+</Properties>
