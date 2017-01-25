@@ -3,17 +3,12 @@
 //
 //  Author: Eishiro Sugata
 //  Based off of Joeywp's Cobra Overlay Format Blueprint
-using System.Xml;
+//  https://github.com/Joeywp/cobra-overlay-format-blueprint
 using System.IO;
 using System;
-using System.Reflection;
-using System.Runtime.InteropServices;
-using System.Reflection.Emit;
 using System.Diagnostics;
 using System.Collections.Generic;
-using System.IO.Compression;
 using System.Xml.Serialization;
-using System.Threading;
 using System.Text;
 
 namespace OVL_Extractor
@@ -43,7 +38,7 @@ namespace OVL_Extractor
 			Unknown1 = reader.ReadUInt32 ();
 			CompressedDataSize = reader.ReadUInt32 ();
 			DecompressedDataSize = reader.ReadUInt32 ();
-			Zero34 = reader.ReadUInt32 ();
+			Unknown2 = reader.ReadUInt32 ();
 			Unknown3 = reader.ReadUInt32 ();
 			Header2Size = reader.ReadUInt32 ();
 			Unknown5 = reader.ReadUInt32 ();
@@ -75,7 +70,7 @@ namespace OVL_Extractor
 			writer.Write (Unknown1);
 			writer.Write (CompressedDataSize);
 			writer.Write (DecompressedDataSize);
-			writer.Write (Zero34);
+			writer.Write (Unknown2);
 			writer.Write (Unknown3);
 			writer.Write (Header2Size);
 			writer.Write (Unknown5);
@@ -106,7 +101,7 @@ namespace OVL_Extractor
 		public uint Unknown1;
 		public uint CompressedDataSize;
 		public uint DecompressedDataSize;
-		public uint Zero34;
+		public uint Unknown2;
 		public uint Unknown3;
 		public uint Header2Size;
 		public uint Unknown5;
@@ -145,52 +140,40 @@ namespace OVL_Extractor
 		{
 			StringPointer = reader.ReadUInt32 ();
 			Name = string.Empty;
-			//Hash = reader.ReadUInt32 ();
-			Unknown2a = reader.ReadByte ();
-			Unknown2b = reader.ReadByte ();
-			Unknown2c = reader.ReadByte ();
-			Unknown2d = reader.ReadByte ();
+			Hash = reader.ReadUInt32 ();
+
 			Type = reader.ReadByte ();
 
-			Unknown3b = reader.ReadByte ();
-			Unknown3c = reader.ReadByte ();
-			Unknown3d = reader.ReadByte ();
+			Unknown2 = reader.ReadByte ();
+			Unknown3 = reader.ReadByte ();
+			Unknown4 = reader.ReadByte ();
 
 		}
 
 		public void Compile (BinaryWriter writer)
 		{
 			writer.Write (StringPointer);
-			//writer.Write (Hash);
-			writer.Write (Unknown2a);
-			writer.Write (Unknown2b);
-			writer.Write (Unknown2c);
-			writer.Write (Unknown2d);
+			writer.Write (Hash);
 			writer.Write (Type);
-			writer.Write (Unknown3b);
-			writer.Write (Unknown3c);
-			writer.Write (Unknown3d);
+			writer.Write (Unknown2);
+			writer.Write (Unknown3);
+			writer.Write (Unknown4);
 
 		}
 
 		public uint StringPointer;
 		public string Name;
 
-		//public uint Hash;
-
-		public byte Unknown2a;
-		public byte Unknown2b;
-		public byte Unknown2c;
-		public byte Unknown2d;
+		public uint Hash;
 
 		public byte Type;
 		// Type?
 
-		public byte Unknown3b;
+		public byte Unknown2;
 
-		public byte Unknown3c;
+		public byte Unknown3;
 
-		public byte Unknown3d;
+		public byte Unknown4;
 
 	}
 
@@ -202,11 +185,7 @@ namespace OVL_Extractor
 			NameStringPointer = reader.ReadUInt32 ();
 			Name = string.Empty;
 			Unknown1 = reader.ReadUInt32 ();
-			//Hash = reader.ReadUInt32 ();
-			Unknown2a = reader.ReadByte ();
-			Unknown2b = reader.ReadByte ();
-			Unknown2c = reader.ReadByte ();
-			Unknown2d = reader.ReadByte ();
+			Hash = reader.ReadUInt32 ();
 			LoaderType = reader.ReadUInt32 ();
 			StringOffset = reader.ReadUInt32 ();
 			SymbolsToResolve = reader.ReadByte ();
@@ -219,11 +198,8 @@ namespace OVL_Extractor
 		{
 			writer.Write (NameStringPointer);
 			writer.Write (Unknown1);
-			//writer.Write (Hash);
-			writer.Write (Unknown2a);
-			writer.Write (Unknown2b);
-			writer.Write (Unknown2c);
-			writer.Write (Unknown2d);
+			writer.Write (Hash);
+
 			writer.Write (LoaderType);
 			writer.Write (StringOffset);
 			writer.Write (SymbolsToResolve);
@@ -236,12 +212,7 @@ namespace OVL_Extractor
 		public uint NameStringPointer;
 		public string Name;
 		public uint Unknown1;
-		//public uint Hash;
-		public byte Unknown2a;
-		public byte Unknown2b;
-		public byte Unknown2c;
-		public byte Unknown2d;
-
+		public uint Hash;
 		public uint LoaderType;
 		public uint StringOffset;
 		public byte SymbolsToResolve;
@@ -276,8 +247,8 @@ namespace OVL_Extractor
 			OtherCount = reader.ReadUInt32 ();
 			DirCount = reader.ReadUInt16 ();
 			LoaderCount = reader.ReadUInt16 ();
-			FileCount1 = reader.ReadUInt32 ();
-			FileCount2 = reader.ReadUInt32 ();
+			LoaderSymbolCount1 = reader.ReadUInt32 ();
+			LoaderSymbolCount2 = reader.ReadUInt32 ();
 			PartCount = reader.ReadUInt32 ();
 			ArchiveCount = reader.ReadUInt32 ();
 			Unknown11 = reader.ReadUInt32 ();
@@ -325,8 +296,8 @@ namespace OVL_Extractor
 			writer.Write (OtherCount);
 			writer.Write (DirCount);
 			writer.Write (LoaderCount);
-			writer.Write (FileCount1);
-			writer.Write (FileCount2);
+			writer.Write (LoaderSymbolCount1);
+			writer.Write (LoaderSymbolCount2);
 			writer.Write (PartCount);
 			writer.Write (ArchiveCount);
 			writer.Write (Unknown11);
@@ -359,165 +330,140 @@ namespace OVL_Extractor
 
 
 		public uint magicNumber;
-		[System.Xml.Serialization.XmlElement (ElementName = "VersionOrGame")]
+
+		/// Seen 0x0 (0) at Elite Dangerous, 0x2 (2) at Disneyland Kinect, 0x8 (8) at Planet Coaster
 		public byte VersionOrGame;
-		// Seen 0x0 (0) at Elite Dangerous, 0x2 (2) at Disneyland Kinect, 0x8 (8) at Planet Coaster
-		[System.Xml.Serialization.XmlElement (ElementName = "Unknown1a")]
+
 		public byte Unknown1a;
-		// Seen 0x12 (18)
-		[System.Xml.Serialization.XmlElement (ElementName = "BigEndian")]
+
+		/// 1 if file uses big-endian, else it uses little-endian
 		public byte BigEndian;
-		// Seen 1 if file uses big-endian, else it uses little-endian
-		[System.Xml.Serialization.XmlElement (ElementName = "Unknown1c")]
+
+		/// 1
 		public byte Unknown1c;
-		// Seen 1
-		[System.Xml.Serialization.XmlElement (ElementName = "Unknown2a")]
+
+		/// 148
 		public byte Unknown2a;
-		// Seen 148
-		[System.Xml.Serialization.XmlElement (ElementName = "Unknown2b")]
+
+		/// 32
 		public byte Unknown2b;
-		// 32
-		[System.Xml.Serialization.XmlElement (ElementName = "Unknown2c")]
+
+		/// 0
 		public byte Unknown2c;
-		// Seen 0
-		[System.Xml.Serialization.XmlElement (ElementName = "Unknown2d")]
+
+		/// 0
 		public byte Unknown2d;
-		// Seen 0
-		[System.Xml.Serialization.XmlElement (ElementName = "Unknown3")]
+
+		/// 0
 		public uint Unknown3;
-		// Seen 0
-		[System.Xml.Serialization.XmlElement (ElementName = "StringTableSize")]
+		
 		public uint StringTableSize;
 
-		[System.Xml.Serialization.XmlElement (ElementName = "Unknown4")]
+		/// 0
 		public uint Unknown4;
-		// Seen 0
-		[System.Xml.Serialization.XmlElement (ElementName = "OtherCount")]
+
+		/// Seen 0, 1, 9, bitflag? Also seen 3 at ED
 		public uint OtherCount;
-		// Seen 0, 1, 9, bitflag? Also seen 3 at ED
-		[System.Xml.Serialization.XmlElement (ElementName = "DirCount")]
+
+		/// Seen 0. Seen more at ED
 		public ushort DirCount;
-		// Seen 0. Seen more at ED
-		[System.Xml.Serialization.XmlElement (ElementName = "LoaderCount")]
+
+		/// Seen 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 11, 29. Also seen 10 at ED
 		public ushort LoaderCount;
-		// Seen 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 11, 29. Also seen 10 at ED
-		[System.Xml.Serialization.XmlElement (ElementName = "FileCount1")]
-		public uint FileCount1;
-		// Seen values between 0 and 47968, mostly less then 1000
-		[System.Xml.Serialization.XmlElement (ElementName = "FileCount2")]
-		public uint FileCount2;
-		// Same as Unknown7
-		[System.Xml.Serialization.XmlElement (ElementName = "PartCount")]
+
+		/// Appears to be the total amount of loader symbols
+		public uint LoaderSymbolCount1;
+
+		/// Same as LoaderSymbolCount1
+		public uint LoaderSymbolCount2;
+
+		/// Seen values between 0 and 57331, rarely more then 1000
 		public uint PartCount;
-		// Seen values between 0 and 57331, rarely more then 1000
-		[System.Xml.Serialization.XmlElement (ElementName = "ArchiveCount")]
+
+		/// Seen the values 1 to 3, also 4 and 5 at ED
 		public uint ArchiveCount;
-		// Seen the values 1 to 3, also 4 and 5 at ED
-		[System.Xml.Serialization.XmlElement (ElementName = "Unknown11")]
+
+		/// Seen the values 0 to 6, also 7 and 8 at ED
 		public uint Unknown11;
-		// Seen the values 0 to 6, also 7 and 8 at ED
-		[System.Xml.Serialization.XmlElement (ElementName = "Unknown12")]
+
+		/// Seen numbers between 0 and 2885, mostly less then or equal to 151
 		public uint Unknown12;
-		// Seen numbers between 0 and 2885, mostly less then or equal to 151
-		[System.Xml.Serialization.XmlElement (ElementName = "Unknown13")]
+
+		/// Seen numbers between 0 and 2362, mostly less then or equal to 231
 		public uint Unknown13;
-		// Seen numbers between 0 and 2362, mostly less then or equal to 231
-		[System.Xml.Serialization.XmlElement (ElementName = "Unknown14")]
+
+		/// Seen numbers between 0 and 2739
 		public uint Unknown14;
-		// Seen numbers between 0 and 2739
-		[System.Xml.Serialization.XmlElement (ElementName = "UnknownCount")]
+
+		/// Seen values between 0 and 38
 		public uint UnknownCount;
-		// Seen values between 0 and 38
-		[System.Xml.Serialization.XmlElement (ElementName = "Unknown16a")]
+
+		/// 0
 		public ushort Unknown16a;
-		// Seen 0
-		[System.Xml.Serialization.XmlElement (ElementName = "Unknown16b")]
+		/// 0
 		public ushort Unknown16b;
-		// Seen 0
-		[System.Xml.Serialization.XmlElement (ElementName = "Unknown17a")]
+		/// 0
 		public ushort Unknown17a;
-		// Seen 0
-		[System.Xml.Serialization.XmlElement (ElementName = "Unknown17b")]
+		/// 0
 		public ushort Unknown17b;
-		// Seen 0
-		[System.Xml.Serialization.XmlElement (ElementName = "Unknown18")]
+		/// 0
 		public uint Unknown18;
-		// Seen 0
-		[System.Xml.Serialization.XmlElement (ElementName = "StaticTextLength")]
+
+
 		public uint StaticTextLength;
-		[System.Xml.Serialization.XmlElement (ElementName = "FileCount3")]
+
+		/// Same as LoaderSymbolCount1 and LoaderSymbolCount2
 		public uint FileCount3;
-		// Seen numbers between 0 and 47968
-		[System.Xml.Serialization.XmlElement (ElementName = "TypeNamesLength")]
+
+		/// Seen numbers between 0 and 1103, mostly lower then 300
 		public uint TypeNamesLength;
-		// Seen numbers between 0 and 1103, mostly lower then 300
-		[System.Xml.Serialization.XmlElement (ElementName = "Unknown22")]
+
+		// 0
 		public uint Unknown22;
-		// Seen 0
-		[System.Xml.Serialization.XmlElement (ElementName = "Unknown23")]
+		// 0
 		public uint Unknown23;
-		// Seen 0
-		[System.Xml.Serialization.XmlElement (ElementName = "Unknown24")]
+		// 0
 		public uint Unknown24;
-		// Seen 0
-		[System.Xml.Serialization.XmlElement (ElementName = "Unknown25")]
+		// 0
 		public uint Unknown25;
-		// Seen 0
-		[System.Xml.Serialization.XmlElement (ElementName = "Unknown26")]
+		// 0
 		public uint Unknown26;
-		// Seen 0
-		[System.Xml.Serialization.XmlElement (ElementName = "Unknown27")]
+		// 0
 		public uint Unknown27;
-		// Seen 0
-		[System.Xml.Serialization.XmlElement (ElementName = "Unknown28")]
+		// 0
 		public uint Unknown28;
-		// Seen 0
-		[System.Xml.Serialization.XmlElement (ElementName = "Unknown29")]
+		// 0
 		public uint Unknown29;
-		// Seen 0
-		[System.Xml.Serialization.XmlElement (ElementName = "Unknown30")]
+		// 0
 		public uint Unknown30;
-		// Seen 0
-		[System.Xml.Serialization.XmlElement (ElementName = "Unknown31")]
+		// 0
 		public uint Unknown31;
-		// Seen 0
-		[System.Xml.Serialization.XmlElement (ElementName = "Unknown32")]
+		// 0
 		public uint Unknown32;
-		// Seen 0
-		[System.Xml.Serialization.XmlElement (ElementName = "Unknown33")]
+		// 0
 		public uint Unknown33;
-		// Seen 0
-		[System.Xml.Serialization.XmlElement (ElementName = "Unknown34")]
+		// 0
 		public uint Unknown34;
-		// Seen 0
+
 	}
 
 	[System.Xml.Serialization.XmlRoot ("Overlay"),XmlType ("Overlay")]
 	public class OVL
 	{
 		public Header header;
-		//[System.Xml.Serialization.XmlElement]
+
 		public Loader[] loaders;
-		//[System.Xml.Serialization.XmlElement]
+
 		public List<ExtraData> data = new List<ExtraData> ();
-		//[System.Xml.Serialization.XmlElement]
 		public List<LoaderSymbol> loaderSymbol = new List<LoaderSymbol> ();
-		[System.Xml.Serialization.XmlElement ("static")]
 		public char[] Static;
-		//[System.Xml.Serialization.XmlElement]
 		public BlockCount blockCount;
-		//[System.Xml.Serialization.XmlElement]
 		public string stringtable;
 
 
-
-		//[System.Xml.Serialization.XmlElement]
-		byte[] unknown;
-
-		public byte[] Unknown{ get { return unknown; } set { unknown = value; } }
+		public byte[] unknown;
 
 		byte[] compressedData;
-		//byte[] uncompressedData;
 
 		public byte[] GetCompressedData{ get { return compressedData; } }
 
@@ -550,45 +496,6 @@ namespace OVL_Extractor
 				Static = new char[header.StaticTextLength];
 
 				Static = reader.ReadChars ((int)header.StaticTextLength);
-				long pos = 0;
-				blockCount = new BlockCount (reader);
-				/*if (reader.PeekChar () == '\0') {
-			while (reader.PeekChar () == '\0') {
-				byte b = reader.ReadByte ();
-			}
-		}
-*/
-		
-				//compressedData = new byte[blockCount.CompressedDataSize];
-				//compressedData = reader.ReadBytes ((int)blockCount.CompressedDataSize);
-				Console.WriteLine (reader.BaseStream.Position);
-				//reader.BaseStream.Position = pos;//reader.BaseStream.Length - blockCount.CompressedDataSize;
-				Console.WriteLine (reader.BaseStream.Position);
-				//uncompressedData = new byte[(int)blockCount.DecompressedDataSize];
-				//Ionic.Zlib.DeflateStream ds = new Ionic.Zlib.DeflateStream (reader.BaseStream, Ionic.Zlib.CompressionMode.Decompress);
-				/*DeflateStream ds = new DeflateStream (reader.BaseStream, CompressionMode.Decompress);
-		//GZipStream gz = new GZipStream (reader.BaseStream, CompressionMode.Decompress);
-
-		//uncompressedData = Ionic.Zlib.ZlibStream.UncompressBuffer ((compressedData));
-		bool success = false;
-		bool quit = false;
-		while (!success && !quit) {
-			try {
-				ds.Read (uncompressedData, 0, (int)blockCount.DecompressedDataSize);
-				success = true;
-			} catch {
-				Thread.Sleep (10);
-				pos++;
-				reader.BaseStream.Position = pos;
-				Console.WriteLine (reader.BaseStream.Position);
-				if (reader.BaseStream.Position + blockCount.CompressedDataSize + 1 > reader.BaseStream.Length) {
-					Console.WriteLine ("Unable to Continue");
-					quit = true;
-				}
-
-			}
-		}*/
-
 
 				long position = reader.BaseStream.Position;
 				reader.BaseStream.Position = reader.BaseStream.Length - blockCount.CompressedDataSize;
@@ -603,13 +510,7 @@ namespace OVL_Extractor
 				reader.Read (unknown, 0, (int)((reader.BaseStream.Length - blockCount.CompressedDataSize) - position));
 
 				reader.Close ();
-				/*char b = (char)uncompressedData [0];
-		int x = 0;
-		while (b != '\0' && uncompressedData.Length > x) {
-			Console.Write (b);
-			b = (char)uncompressedData [x];
-			x++;
-		}*/
+			
 			
 				for (int i = 0; i < loaders.Length; i++) {
 					loaders [i].Name = LoaderComment (loaders [i]);
@@ -624,10 +525,6 @@ namespace OVL_Extractor
 			} catch (Exception e) {
 				Console.Write (e);
 			}
-
-			Console.WriteLine ("File Count = {0}", header.FileCount1);
-			Console.WriteLine ("Loader Symbol Count = {0}", loaderSymbol.Count);
-			Console.WriteLine ("Archive Count = {0}", header.ArchiveCount);
 		}
 
 		public void Compile (BinaryWriter writer)
@@ -655,7 +552,7 @@ namespace OVL_Extractor
 
 		private void LoadStringTable (BinaryReader reader)
 		{
-			stringtable = string.Empty;//[header.StringTableSize];
+			stringtable = string.Empty;
 			uint i;
 			for (i = 0; i < header.StringTableSize; i++) {
 				char c = (char)reader.ReadByte ();
@@ -701,14 +598,6 @@ namespace OVL_Extractor
 
 		public string StringPointer (uint pointer)
 		{
-			/*string[] list = stringtable.Split ('\0');
-		if (pointer > list.Length) {
-			Console.WriteLine ("Unable to find string: {0} out of {1}", pointer, list.Length);
-			return string.Empty;
-		}
-		string value = list [pointer];
-
-		return value;*/
 
 			if (pointer > stringtable.Length) {
 				Console.WriteLine ("Unable to find string: {0} out of {1}", pointer, stringtable.Length);
