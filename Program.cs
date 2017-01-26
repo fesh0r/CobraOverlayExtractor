@@ -11,7 +11,6 @@ using System.IO.Ports;
 using System.Diagnostics;
 using Ionic.Zlib;
 using Ionic.Zip;
-using OVL_Extractor;
 
 namespace Ovl_Compiler
 {
